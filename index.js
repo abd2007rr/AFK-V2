@@ -1,7 +1,6 @@
 const mineflayer = require('mineflayer');
 const Movements = require('mineflayer-pathfinder').Movements;
 const pathfinder = require('mineflayer-pathfinder').pathfinder;
-const { GoalBlock } = require('mineflayer-pathfinder').goals;
 const config = require('./settings.json');
 const express = require('express');
 const app = express();
@@ -26,23 +25,34 @@ function createBot() {
   bot.loadPlugin(pathfinder);
   const mcData = require('minecraft-data')(bot.version);
   const defaultMove = new Movements(bot, mcData);
-  bot.settings.colorsEnabled = false;
 
-  // حركة عشوائية
+  // فتح أي باب قريب
+  function tryOpenDoor() {
+    const block = bot.blockAt(bot.entity.position.offset(0, 0, 1));
+    if (block && block.name.includes('door')) {
+      bot.activateBlock(block);
+    }
+  }
+
+  // حركة عشوائية مع تغيير السرعة
   function randomMovement() {
-    const actions = ['forward', 'back', 'left', 'right', 'jump', 'stop'];
-    const action = actions[Math.floor(Math.random() * actions.length)];
+    const directions = ['forward', 'back', 'left', 'right'];
+    const dir = directions[Math.floor(Math.random() * directions.length)];
 
     bot.clearControlStates();
+    bot.setControlState(dir, true);
 
-    if (action !== 'stop') {
-      bot.setControlState(action, true);
-    }
+    // تغيير السرعة (sprint) أحياناً
+    const sprint = Math.random() < 0.4;
+    bot.setControlState('sprint', sprint);
 
-    // تغيير اتجاه النظر عشوائي
-    bot.look(Math.random() * Math.PI * 2 - Math.PI, Math.random() * 0.5 - 0.25, true);
+    // تغيير اتجاه النظر
+    bot.look(Math.random() * Math.PI * 2, Math.random() * 0.5 - 0.25, true);
 
-    setTimeout(randomMovement, 2000 + Math.random() * 4000); // بين 2 و6 ثواني
+    // محاولة فتح باب أحياناً
+    if (Math.random() < 0.3) tryOpenDoor();
+
+    setTimeout(randomMovement, 2000 + Math.random() * 4000);
   }
 
   // رسائل شات عشوائية
@@ -51,8 +61,7 @@ function createBot() {
     const messages = config.utils['chat-messages']['messages'];
     const msg = messages[Math.floor(Math.random() * messages.length)];
     bot.chat(msg);
-
-    setTimeout(randomChat, 5000 + Math.random() * 15000); // بين 5 و20 ثانية
+    setTimeout(randomChat, 5000 + Math.random() * 15000);
   }
 
   bot.once('spawn', () => {
