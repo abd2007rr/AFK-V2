@@ -26,7 +26,6 @@ function createBot() {
   const mcData = require('minecraft-data')(bot.version);
   const defaultMove = new Movements(bot, mcData);
 
-  // فتح أي باب قريب
   function tryOpenDoor() {
     const block = bot.blockAt(bot.entity.position.offset(0, 0, 1));
     if (block && block.name.includes('door')) {
@@ -34,7 +33,6 @@ function createBot() {
     }
   }
 
-  // حركة عشوائية مع تغيير السرعة
   function randomMovement() {
     const directions = ['forward', 'back', 'left', 'right'];
     const dir = directions[Math.floor(Math.random() * directions.length)];
@@ -42,20 +40,16 @@ function createBot() {
     bot.clearControlStates();
     bot.setControlState(dir, true);
 
-    // تغيير السرعة (sprint) أحياناً
     const sprint = Math.random() < 0.4;
     bot.setControlState('sprint', sprint);
 
-    // تغيير اتجاه النظر
     bot.look(Math.random() * Math.PI * 2, Math.random() * 0.5 - 0.25, true);
 
-    // محاولة فتح باب أحياناً
     if (Math.random() < 0.3) tryOpenDoor();
 
     setTimeout(randomMovement, 2000 + Math.random() * 4000);
   }
 
-  // رسائل شات عشوائية
   function randomChat() {
     if (!config.utils['chat-messages'].enabled) return;
     const messages = config.utils['chat-messages']['messages'];
